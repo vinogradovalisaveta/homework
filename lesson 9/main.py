@@ -30,7 +30,7 @@ def get_loadavg():
 
 def get_sleeping():
     sleeping = 0
-    for process in processes:
+    for process in get_processes():
         if process['status'] == 'sleeping':
             sleeping += 1
     return sleeping
@@ -38,7 +38,7 @@ def get_sleeping():
 
 def get_running():
     running = 0
-    for process in processes:
+    for process in get_processes():
         if process['status'] == 'running':
             running += 1
     return running
@@ -46,33 +46,42 @@ def get_running():
 
 def get_threads():
     threads = 0
-    for process in processes:
+    for process in get_processes():
         threads += process['n_threads']
     return threads
 
 
-processes = get_processes()
 avgload1, avgload2, avgload3 = get_loadavg()
 bytes_sent, bytes_recv, pcks_sent, pcks_recv, a, b, c, d = psutil.net_io_counters()
 
 
 def info():
-    info = (f' Processes: {len(processes)} total, {get_running()} running, {get_sleeping()} sleeping,'
-            f' {get_threads()} threads.\n Load Avg: {round(avgload1, 2)} {round(avgload2, 2)} {round(avgload3, 2)}'
-            f' CPU usage: {psutil.cpu_percent()}%\n Networks packets: {pcks_sent} sent, {pcks_recv} received, '
-            f'{bytes_sent} bytes sent, {bytes_recv} bytes received.')
-    return info
+    print(f'Processes: {len(get_processes())} total, {get_running()} running, {get_sleeping()} sleeping, '
+          f'{get_threads()} threads.\nLoad Avg: {avgload1:.2f} {avgload2:.2f} {avgload3:.2f} CPU usage: '
+          f'{psutil.cpu_percent()}% \nNetwork packets: {pcks_sent} sent, {pcks_recv} received, {bytes_sent} sent, '
+          f'{bytes_recv} received.\n')
 
 
-print(info())
+def table():
+    i = 0
+    print("|{:^8}|{:25}|{:^10}|{:^10}|{:^10}|{:^10}|{:^10}|{:^10}|".format('pid', 'name', 'cores', 'cpu_usage',
+                                                                            'status', 'nice', 'n_threads', 'user'))
+    for process in get_processes():
+        if i == 30:
+            break
+        else:
+            print("|{:^8}|{:^25}|{:^10}|{:^10}|{:^10}|{:^10}|{:^10}|{:^10}|".format(process['pid'],
+                                                                                    process['name'], process['cores'],
+                                                                                    process['cpu_usage'],
+                                                                                    process['status'], process['nice'],
+                                                                                    process['n_threads'],
+                                                                                    process['user']))
+            i += 1
 
 
-print("|{:^8}|{:^40}|{:^10}|{:^10}|{:^10}|{:^10}|{:^10}|{:^30}|".format('pid', 'name', 'cores', 'cpu_usage',
-                                                                        'status', 'nice', 'n_threads', 'user'))
-for process in processes:
-    for k, v in process.items():
-        # pid, name, cores, cpu_usage, status, nice, n_threads, user = v
-        # print(pid, name, cores, cpu_usage, status, nice, n_threads, user)
-        proc = [process['pid'], process['name'], process['cores'], process['cpu_usage'], process['status'],
-                process['nice'], process['n_threads'], process['user']]
-        print("|{:^8}|{:^40}|{:^10}|{:^10}|{:^10}|{:^10}|{:^10}|{:^30}|".format(*proc))
+def show():
+    info()
+    table()
+
+
+show()
